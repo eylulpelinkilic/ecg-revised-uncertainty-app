@@ -738,52 +738,50 @@ if artifacts is not None:
     st.info(T("about_banner"))
     st.divider()
 
-    # --- Ana Arayüz (2 Sütun) ---
-    col1, col2 = st.columns([1, 1]) 
+    # --- Çıktı alanı üstte, form altta ---
+    output_container = st.container()
 
-    # --- SÜTUN 1: Veri Girişi ---
-    with col1:
-        st.subheader(T("header_input"))
-        st.info(T("info_note"))
-        
-        with st.form("patient_form"):
-            patient_data = {}
-            processed_features = set()
+    st.divider()
+    st.subheader(T("header_input"))
+    st.info(T("info_note"))
 
-            with st.expander(T("key_features"), expanded=False):
-                for feature in KEY_FEATURES:
-                    if feature in feature_list:
-                        render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
-                        processed_features.add(feature)
-            with st.expander(T("symptoms"), expanded=False):
-                for feature in SYMPTOM_FEATURES:
-                    if feature in feature_list:
-                        render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
-                        processed_features.add(feature)
-            with st.expander(T("history"), expanded=False):
-                for feature in HISTORY_FEATURES:
-                    if feature in feature_list:
-                        render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
-                        processed_features.add(feature)
-            with st.expander(T("labs"), expanded=False):
-                for feature in LAB_ECG_FEATURES:
-                    if feature in feature_list:
-                        render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
-                        processed_features.add(feature)
+    with st.form("patient_form"):
+        patient_data = {}
+        processed_features = set()
 
-            other_features = [f for f in feature_list if f not in processed_features]
-            if other_features:
-                with st.expander(T("other_features"), expanded=False):
-                    for feature in other_features:
-                        render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
-            
-            submit_button = st.form_submit_button(
-                T("calculate_button"),
-                type="primary"
-            )
+        with st.expander(T("key_features"), expanded=False):
+            for feature in KEY_FEATURES:
+                if feature in feature_list:
+                    render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
+                    processed_features.add(feature)
+        with st.expander(T("symptoms"), expanded=False):
+            for feature in SYMPTOM_FEATURES:
+                if feature in feature_list:
+                    render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
+                    processed_features.add(feature)
+        with st.expander(T("history"), expanded=False):
+            for feature in HISTORY_FEATURES:
+                if feature in feature_list:
+                    render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
+                    processed_features.add(feature)
+        with st.expander(T("labs"), expanded=False):
+            for feature in LAB_ECG_FEATURES:
+                if feature in feature_list:
+                    render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
+                    processed_features.add(feature)
 
-    # --- SÜTUN 2: Çıktılar ve Karşılama Ekranı ---
-    with col2:
+        other_features = [f for f in feature_list if f not in processed_features]
+        if other_features:
+            with st.expander(T("other_features"), expanded=False):
+                for feature in other_features:
+                    render_feature_widget(feature, patient_data, prefill=prefill_data.get(feature), key_suffix=str(_demo_idx))
+
+        submit_button = st.form_submit_button(
+            T("calculate_button"),
+            type="primary"
+        )
+
+    with output_container:
         if submit_button:
             
             missing_features = [feature for feature, value in patient_data.items() if value is None]
