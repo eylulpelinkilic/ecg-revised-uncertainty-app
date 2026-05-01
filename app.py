@@ -519,21 +519,66 @@ def plot_diagnostic_landscape(X_emb_train, y_train, lang, new_patient_coords=Non
 
 def plot_uncertainty_vector(x_new_vec_df, lang):
     """Çubuk grafiği çizer."""
-    labeled = x_new_vec_df['Feature'].apply(
-        lambda f: f"★ {f}" if f in MAJOR_RISK_FEATURES else f
-    )
+    y_vals  = x_new_vec_df['Feature'].tolist()
+    scores  = x_new_vec_df['Uncertainty Score'].tolist()
+    max_val = max(scores) if scores else 1.0
+    min_val = min(scores) if scores else 0.0
+
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=x_new_vec_df['Uncertainty Score'], y=labeled, orientation='h', marker=dict(color=COLOR_BLUE)))
-    
+    fig.add_trace(go.Bar(
+        x=scores, y=y_vals,
+        orientation='h',
+        marker=dict(color=COLOR_BLUE),
+        showlegend=False,
+    ))
+
+    # Colored star annotations at the right end of each major-risk bar
+    shown_acs, shown_myo = [], []
+    for f, unc in zip(y_vals, scores):
+        if f in ACS_RISK_FEATURES:
+            color = COLOR_BLUE
+            shown_acs.append(f)
+        elif f in MYO_RISK_FEATURES:
+            color = COLOR_NEW_PATIENT
+            shown_myo.append(f)
+        else:
+            continue
+        fig.add_annotation(
+            x=unc, y=f,
+            xref='x', yref='y',
+            text=' ★',
+            showarrow=False,
+            font=dict(color=color, size=18),
+            xanchor='left',
+        )
+
+    # Legend entries (only when that group appears in top-20)
+    if shown_acs:
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode='markers',
+            marker=dict(symbol='star', size=14, color=COLOR_BLUE),
+            name="★ AKS Major Risk Faktörü" if lang == 'TR' else "★ ACS Major Risk Factor",
+            showlegend=True,
+        ))
+    if shown_myo:
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode='markers',
+            marker=dict(symbol='star', size=14, color=COLOR_NEW_PATIENT),
+            name="★ Miyokardit Major Risk Faktörü" if lang == 'TR' else "★ Myocarditis Major Risk Factor",
+            showlegend=True,
+        ))
+
+    x_margin = abs(max_val) * 0.15 + 0.01
     fig.update_layout(
-        title=T("bar_chart_title"), 
-        xaxis_title=T("bar_xaxis"), 
-        yaxis_title=T("bar_yaxis"), 
-        plot_bgcolor=COLOR_BACKGROUND, 
-        paper_bgcolor=COLOR_BACKGROUND, 
-        font_color=COLOR_TEXT, 
-        yaxis=dict(autorange="reversed"), 
-        height=max(400, len(x_new_vec_df) * 20)
+        title=T("bar_chart_title"),
+        xaxis_title=T("bar_xaxis"),
+        yaxis_title=T("bar_yaxis"),
+        plot_bgcolor=COLOR_BACKGROUND,
+        paper_bgcolor=COLOR_BACKGROUND,
+        font_color=COLOR_TEXT,
+        yaxis=dict(autorange="reversed"),
+        xaxis=dict(range=[min(0, min_val), max_val + x_margin]),
+        height=max(400, len(x_new_vec_df) * 20),
     )
     return fig
 
@@ -559,10 +604,9 @@ categorical_map = {
     "Alcohol": yes_no_map, "KOAH": yes_no_map, "PAH": yes_no_map,
     "HIPERTIROIDI": yes_no_map, "REYNAULD": yes_no_map,
 }
-MAJOR_RISK_FEATURES = {
-    "DM", "HT", "SIGARA", "HL",          # ACS major risk factors
-    "Recent Infection(4 hafta)",           # Myocarditis major risk factor
-}
+ACS_RISK_FEATURES = {"DM", "HT", "SIGARA", "HL"}
+MYO_RISK_FEATURES = {"Recent Infection(4 hafta)"}
+MAJOR_RISK_FEATURES = ACS_RISK_FEATURES | MYO_RISK_FEATURES
 
 KEY_FEATURES = [
     "AGE", "SEX",
