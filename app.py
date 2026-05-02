@@ -738,8 +738,8 @@ if artifacts is not None:
     st.info(T("about_banner"))
     st.divider()
 
-    # --- Çıktı alanı üstte, form altta ---
-    output_container = st.container()
+    # --- İki sütunlu düzen: solda tanısal manzara, sağda belirsizlik grafikleri; form altta ---
+    top_col1, top_col2 = st.columns([1, 1])
 
     st.divider()
     st.subheader(T("header_input"))
@@ -781,14 +781,12 @@ if artifacts is not None:
             type="primary"
         )
 
-    with output_container:
-        if submit_button:
-            
-            missing_features = [feature for feature, value in patient_data.items() if value is None]
-            num_missing = len(missing_features)
-            
-            # Eksik feature varsa -> HATA (imputation yok)
-            if num_missing > 0:
+    if submit_button:
+        missing_features = [feature for feature, value in patient_data.items() if value is None]
+        num_missing = len(missing_features)
+
+        if num_missing > 0:
+            with top_col1:
                 st.error(T("error_missing_max").format(num_missing=num_missing))
                 st.write(f"**{T('error_missing_fields')}**")
                 for f in missing_features[:10]: st.write(f"- {f}")
@@ -796,33 +794,22 @@ if artifacts is not None:
                     st.write(T("missing_and_more").format(count=len(missing_features) - 10))
                 st.warning(T("warning_all_required"))
 
-            # Tüm feature'lar dolu -> HESAPLA
-            else: 
+        else:
+            X_new_df = pd.DataFrame([patient_data])[feature_list]
+            x_new_unc = model.named_steps['uncertainty'].transform(X_new_df)
+            x_new_vec_raw = x_new_unc[0]
+
+            _unc_feats  = list(model.named_steps['uncertainty'].feature_names_in_)
+            _tsne_feats = list(tsne_scaler.feature_names_in_)
+            x_new_unc_df     = pd.DataFrame(x_new_unc, columns=_unc_feats)
+            x_new_unc_sorted = x_new_unc_df[_tsne_feats].values
+            x_new_std        = tsne_scaler.transform(x_new_unc_sorted)
+            new_coords_xy = find_tsne_position(x_new_std, embedding_data['X_std'], embedding_data['X_emb'], k=5)
+            x_new_vec_df = pd.DataFrame({"Feature": feature_list, "Uncertainty Score": x_new_vec_raw}).sort_values(by="Uncertainty Score", ascending=False).head(20)
+
+            with top_col1:
                 st.subheader(T("header_output"))
                 st.success(T("success_all_data"))
-                
-                # Transform patient data through the fitted pipeline
-                X_new_df = pd.DataFrame([patient_data])[feature_list]
-
-                # Raw uncertainty values (transformer step only) — for bar chart
-                x_new_unc = model.named_steps['uncertainty'].transform(X_new_df)
-                x_new_vec_raw = x_new_unc[0]
-
-                # Reorder uncertainty vector to sorted (alphabetical) feature order,
-                # then scale with tsne_scaler — the exact scaler used to produce
-                # embedding_data['X_std'] in NEW_uncertainty.ipynb.
-                # The model pipeline uses a different (non-alphabetical) feature order,
-                # so a direct model.named_steps['scaler'].transform() would compare
-                # against the wrong columns in X_std.
-                _unc_feats  = list(model.named_steps['uncertainty'].feature_names_in_)
-                _tsne_feats = list(tsne_scaler.feature_names_in_)
-                x_new_unc_df     = pd.DataFrame(x_new_unc, columns=_unc_feats)
-                x_new_unc_sorted = x_new_unc_df[_tsne_feats].values
-                x_new_std        = tsne_scaler.transform(x_new_unc_sorted)
-
-                # Project into landscape space via kNN interpolation
-                new_coords_xy = find_tsne_position(x_new_std, embedding_data['X_std'], embedding_data['X_emb'], k=5)
-
                 st.subheader(T("plot_title_tsne"))
                 _view_options = [T("view_all"), T("view_myo"), T("view_acs")]
                 _view_sel = st.radio(
@@ -847,17 +834,15 @@ if artifacts is not None:
                         T("legend_g1"), T("legend_g2"), T("legend_new")
                     )
                 st.image(landscape_img, use_container_width=True)
-                
+
+            with top_col2:
                 st.subheader(T("plot_title_bar"))
-                x_new_vec_df = pd.DataFrame({"Feature": feature_list, "Uncertainty Score": x_new_vec_raw}).sort_values(by="Uncertainty Score", ascending=False).head(20)
                 st.write(T("plot_top20"))
                 fig_bar = plot_uncertainty_vector(x_new_vec_df, lang)
                 st.plotly_chart(fig_bar, use_container_width=True)
-                
-        else:
-            # --- Karşılama Ekranı "Bulut"u gösterir ---
 
-            # 1. ÖNCE "BULUT"U GÖSTER — notebook'tan kaydedilen PNG
+    else:
+        with top_col1:
             st.subheader(T("plot_title_tsne"))
             _view_options_w = [T("view_all"), T("view_myo"), T("view_acs")]
             _view_sel_w = st.radio(
@@ -879,8 +864,8 @@ if artifacts is not None:
                     plot_diagnostic_landscape(embedding_data['X_emb'], embedding_data['y'], lang),
                     use_container_width=True
                 )
-            
-            # --- Global uncertainty bar chart ---
+
+        with top_col2:
             st.subheader(T("plot_title_global_unc"))
             st.write(T("plot_top20_global"))
             _tsne_feats = list(tsne_scaler.feature_names_in_)
@@ -909,9 +894,9 @@ if artifacts is not None:
             )
             st.plotly_chart(fig_global, use_container_width=True)
 
-            with st.expander(T("welcome_header"), expanded=False):
-                st.info(T("welcome_info"))
-                st.markdown(T("welcome_text"), unsafe_allow_html=True)
+        with st.expander(T("welcome_header"), expanded=False):
+            st.info(T("welcome_info"))
+            st.markdown(T("welcome_text"), unsafe_allow_html=True)
 else:
     # Artifact'lar yüklenemezse
     st.error(T("load_error"))
