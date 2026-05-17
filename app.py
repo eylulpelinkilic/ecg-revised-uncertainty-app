@@ -822,19 +822,6 @@ if artifacts is not None:
             with top_col1:
                 st.subheader(T("header_output"))
                 st.success(T("success_all_data"))
-                try:
-                    proba = model.predict_proba(X_new_df)[0]
-                    classes = list(model.classes_)
-                    pred_idx = int(np.argmax(proba))
-                    pred_class = classes[pred_idx]
-                    pred_prob = proba[pred_idx] * 100
-                    if pred_class == G1:
-                        pred_text = T("prediction_text_myo").format(prob=pred_prob)
-                    else:
-                        pred_text = T("prediction_text_acs").format(prob=pred_prob)
-                    st.metric(T("prediction_header"), pred_text)
-                except Exception:
-                    pass
                 st.subheader(T("plot_title_tsne"))
                 _view_options = [T("view_all"), T("view_myo"), T("view_acs")]
                 _view_sel = st.radio(
@@ -861,6 +848,19 @@ if artifacts is not None:
                 st.image(landscape_img, use_container_width=True)
 
             with top_col2:
+                try:
+                    proba = model.predict_proba(X_new_df)[0]
+                    classes = list(model.classes_)
+                    pred_idx = int(np.argmax(proba))
+                    pred_class = classes[pred_idx]
+                    pred_prob = proba[pred_idx] * 100
+                    if pred_class == G1:
+                        pred_text = T("prediction_text_myo").format(prob=pred_prob)
+                    else:
+                        pred_text = T("prediction_text_acs").format(prob=pred_prob)
+                    st.metric(T("prediction_header"), pred_text)
+                except Exception:
+                    pass
                 st.subheader(T("plot_title_bar"))
                 st.write(T("plot_top20"))
                 fig_bar = plot_uncertainty_vector(x_new_vec_df, lang)
