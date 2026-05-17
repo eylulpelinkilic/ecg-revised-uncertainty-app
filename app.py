@@ -164,6 +164,18 @@ LANG_STRINGS = {
     "view_all": {"ENG": "All Patients", "TR": "Tüm Hastalar"},
     "view_myo": {"ENG": "Myocarditis Only", "TR": "Sadece Miyokardit"},
     "view_acs": {"ENG": "ACS Only", "TR": "Sadece AKS"},
+    "prediction_header": {
+        "ENG": "Model Prediction",
+        "TR": "Modelin Tahmini"
+    },
+    "prediction_text_myo": {
+        "ENG": "{prob:.0f}% probability of Myocarditis",
+        "TR": "%{prob:.0f} olasılıkla Miyokardit"
+    },
+    "prediction_text_acs": {
+        "ENG": "{prob:.0f}% probability of ACS",
+        "TR": "%{prob:.0f} olasılıkla AKS"
+    },
     "risk_factors_note": {
         "ENG": (
             "**Major Risk Factors**  \n"
@@ -810,6 +822,19 @@ if artifacts is not None:
             with top_col1:
                 st.subheader(T("header_output"))
                 st.success(T("success_all_data"))
+                try:
+                    proba = model.predict_proba(X_new_df)[0]
+                    classes = list(model.classes_)
+                    pred_idx = int(np.argmax(proba))
+                    pred_class = classes[pred_idx]
+                    pred_prob = proba[pred_idx] * 100
+                    if pred_class == G1:
+                        pred_text = T("prediction_text_myo").format(prob=pred_prob)
+                    else:
+                        pred_text = T("prediction_text_acs").format(prob=pred_prob)
+                    st.metric(T("prediction_header"), pred_text)
+                except Exception:
+                    pass
                 st.subheader(T("plot_title_tsne"))
                 _view_options = [T("view_all"), T("view_myo"), T("view_acs")]
                 _view_sel = st.radio(
