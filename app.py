@@ -108,6 +108,11 @@ LANG_STRINGS = {
         "ENG": "Top 20 features with the lowest mean absolute uncertainty score across all training patients:",
         "TR": "Tüm eğitim hastalarında en düşük ortalama mutlak belirsizlik skoruna sahip 20 özellik:"
     },
+    "plot_title_patient_unc": {"ENG": "Features Contributing to Certainty (This Patient)", "TR": "Belirliğe Katkıda Bulunan Özellikler (Bu Hasta)"},
+    "plot_top20_patient": {
+        "ENG": "Top 20 features with the lowest uncertainty score for this patient:",
+        "TR": "Bu hastada en düşük belirsizlik skoruna sahip 20 özellik:"
+    },
     "legend_g1": {"ENG": "Grup 1 (Myocarditis)", "TR": "Grup 1 (Miyokardit)"},
     "legend_g2": {"ENG": "Grup 2 (ACS)", "TR": "Grup 2 (AKS)"},
     "legend_new": {"ENG": "New Patient", "TR": "Yeni Hasta"},
@@ -865,6 +870,35 @@ if artifacts is not None:
                 st.write(T("plot_top20"))
                 fig_bar = plot_uncertainty_vector(x_new_vec_df, lang)
                 st.plotly_chart(fig_bar, use_container_width=True)
+
+                st.subheader(T("plot_title_patient_unc"))
+                st.write(T("plot_top20_patient"))
+                _patient_cert_df = pd.DataFrame({
+                    "Feature": _tsne_feats,
+                    "Uncertainty Score": x_new_unc_sorted[0]
+                })
+                _patient_cert_df = _patient_cert_df[_patient_cert_df["Uncertainty Score"] > 0] \
+                    .sort_values("Uncertainty Score", ascending=True).head(20)
+                _patient_cert_df["Label"] = _patient_cert_df["Feature"].apply(
+                    lambda f: f"★ {f}" if f in MAJOR_RISK_FEATURES else f
+                )
+                fig_patient_cert = go.Figure()
+                fig_patient_cert.add_trace(go.Bar(
+                    x=_patient_cert_df["Uncertainty Score"],
+                    y=_patient_cert_df["Label"],
+                    orientation='h',
+                    marker=dict(color=COLOR_BLUE)
+                ))
+                fig_patient_cert.update_layout(
+                    xaxis_title=T("bar_xaxis"),
+                    yaxis_title=T("bar_yaxis"),
+                    plot_bgcolor=COLOR_BACKGROUND,
+                    paper_bgcolor=COLOR_BACKGROUND,
+                    font_color=COLOR_TEXT,
+                    yaxis=dict(autorange="reversed"),
+                    height=max(400, 20 * 20)
+                )
+                st.plotly_chart(fig_patient_cert, use_container_width=True)
 
     else:
         with top_col1:
