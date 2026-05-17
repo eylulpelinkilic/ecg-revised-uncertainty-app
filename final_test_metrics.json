@@ -4,6 +4,7 @@
   "precision_macro": 0.95,
   "recall_macro": 0.9285714285714286,
   "f1_macro": 0.9352226720647774,
+  "roc_auc": 0.9722222222222222,
   "confusion_matrix": [
     [
       12,
