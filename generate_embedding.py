@@ -54,8 +54,10 @@ X_unc = model.named_steps["uncertainty"].transform(X_train)
 
 # --- Scale with fresh StandardScaler (matches notebook: StandardScaler().fit_transform) ---
 print("Scaling with fresh StandardScaler...")
+unc_feature_names = list(model.named_steps["uncertainty"].feature_names_in_)
+X_unc_df = pd.DataFrame(X_unc, columns=unc_feature_names)
 tsne_scaler = StandardScaler()
-X_std = tsne_scaler.fit_transform(X_unc)
+X_std = tsne_scaler.fit_transform(X_unc_df)
 
 # --- Run t-SNE with exact same parameters as NEW_uncertainty.ipynb ---
 print("Running t-SNE (this may take a minute)...")
