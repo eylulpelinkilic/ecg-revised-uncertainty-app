@@ -1,14 +1,14 @@
 {
-  "model_name": "VotingClassifier(LogisticRegression+SVC+RandomForestClassifier)",
-  "accuracy": 0.9375,
-  "precision_macro": 0.95,
-  "recall_macro": 0.9285714285714286,
-  "f1_macro": 0.9352226720647774,
-  "roc_auc": 0.9722222222222222,
+  "model_name": "VotingClassifier(LogisticRegression+SVC+KNeighborsClassifier)",
+  "accuracy": 0.875,
+  "precision_macro": 0.9090909090909092,
+  "recall_macro": 0.8571428571428572,
+  "f1_macro": 0.8666666666666667,
+  "roc_auc": 0.9603174603174603,
   "confusion_matrix": [
     [
-      12,
-      2
+      10,
+      4
     ],
     [
       0,

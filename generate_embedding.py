@@ -33,7 +33,7 @@ G1, G2 = 1, 2
 
 # --- Load raw data ---
 print("Loading data...")
-df = pd.read_excel("NEW_Miyokardit_08.12.2025.xlsx", sheet_name=0)
+df = pd.read_excel("copy_Miyokardit_08.12.2025.xlsx", sheet_name=0)
 df = df.dropna(subset=[LABEL_COL])
 
 # --- Extract training split using label-based indexing (.loc) ---
@@ -54,7 +54,8 @@ X_unc = model.named_steps["uncertainty"].transform(X_train)
 
 # --- Scale with fresh StandardScaler (matches notebook: StandardScaler().fit_transform) ---
 print("Scaling with fresh StandardScaler...")
-X_std = StandardScaler().fit_transform(X_unc)
+tsne_scaler = StandardScaler()
+X_std = tsne_scaler.fit_transform(X_unc)
 
 # --- Run t-SNE with exact same parameters as NEW_uncertainty.ipynb ---
 print("Running t-SNE (this may take a minute)...")
@@ -68,6 +69,12 @@ os.makedirs("app_artifacts", exist_ok=True)
 out_path = os.path.join("app_artifacts", "embedding_data.npz")
 np.savez(out_path, X_std=X_std, X_emb=X_emb, y=y_train)
 print(f"Saved embedding to {out_path}")
+
+# --- Save tsne_scaler (used by app.py for kNN positioning of new patients) ---
+scaler_path = os.path.join("app_artifacts", "tsne_scaler.pkl")
+with open(scaler_path, "wb") as f:
+    pickle.dump(tsne_scaler, f)
+print(f"Saved tsne_scaler to {scaler_path}")
 
 # --- Generate diagnostic landscape PNG (exact notebook logic) ---
 print("Generating diagnostic landscape PNG...")
