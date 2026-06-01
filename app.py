@@ -817,7 +817,7 @@ if artifacts is not None:
             x_new_vec_raw = x_new_unc[0]
 
             _unc_feats  = list(model.named_steps['uncertainty'].feature_names_in_)
-            _tsne_feats = list(tsne_scaler.feature_names_in_)
+            _tsne_feats = _unc_feats
             x_new_unc_df     = pd.DataFrame(x_new_unc, columns=_unc_feats)
             x_new_unc_sorted = x_new_unc_df[_tsne_feats].values
             x_new_std        = tsne_scaler.transform(x_new_unc_sorted)
@@ -927,7 +927,7 @@ if artifacts is not None:
         with top_col2:
             st.subheader(T("plot_title_global_unc"))
             st.write(T("plot_top20_global"))
-            _tsne_feats = list(tsne_scaler.feature_names_in_)
+            _tsne_feats = list(model.named_steps['uncertainty'].feature_names_in_)
             _mean_raw = tsne_scaler.mean_
             _global_df = pd.DataFrame({"Feature": _tsne_feats, "Uncertainty Score": _mean_raw})
             _global_df = _global_df[_global_df["Uncertainty Score"] > 0] \
